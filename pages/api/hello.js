@@ -1,10 +1,8 @@
 // Next.js API route support: https://nextjs.org/docs/api-routes/introduction
-const puppeteer = require('puppeteer');
-const chromium = require ("chrome-aws-lambda");
+const chrome = require('chrome-aws-lambda');
+const puppeteer = require('puppeteer-core');
 require('dotenv').config();
-const jsdom = require('jsdom');
-
-export default function handler(req, res) {
+import jsdom from "jsdom";
 
 const getAllAttributes = el => el
   .getAttributeNames()
@@ -48,8 +46,6 @@ const waitTillHTMLRendered = async (page, timeout = 30000) => {
   }
 };
 
-  
-
 const checkDate = (dataBoxes) => {
   const wishDate = JSON.parse(process.env.WISH_GAME);
 
@@ -88,17 +84,21 @@ const LOGIN_URL = 'https://www.golfpalermo.com/?page=login&url=?page%3Dmyaccount
 const RESERVATION_STEP_1_URL = 'https://www.golfpalermo.com/?page=reservas_step1';
 const MY_RESERVATIONS_URL = 'https://www.golfpalermo.com/index.php?page=myaccount_misreservas';
 
+
+export default function handler(req, res) {
 (async () => {
-  // PARAMETERS
-  //
   console.log(JSON.parse(process.env.WISH_GAME))
   let flag = true;
   try {
     while (flag) { 
-      const browser = await chromium.puppeteer.launch({
-        executablePath: await chromium.executablePath,
-        headless: true,
-    });
+      const browser = await puppeteer.launch(process.env.AWS_EXECUTION_ENV ? {
+        args: chrome.args,
+        executablePath: await chrome.executablePath,
+        headless: chrome.headless
+      } : {
+        args: [],
+        executablePath: '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome'
+      });
       const page = await browser.newPage();
 
       await page.setViewport({ width: 1200, height: 1000});
