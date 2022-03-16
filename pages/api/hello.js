@@ -1,11 +1,10 @@
 // Next.js API route support: https://nextjs.org/docs/api-routes/introduction
 const puppeteer = require('puppeteer');
+const chromium = require ("chrome-aws-lambda");
 require('dotenv').config();
 const jsdom = require('jsdom');
 
 export default function handler(req, res) {
-
-
 
 const getAllAttributes = el => el
   .getAttributeNames()
@@ -96,7 +95,10 @@ const MY_RESERVATIONS_URL = 'https://www.golfpalermo.com/index.php?page=myaccoun
   let flag = true;
   try {
     while (flag) { 
-      const browser = await puppeteer.launch({headless: true}) ;
+      const browser = await chromium.puppeteer.launch({
+        executablePath: await chromium.executablePath,
+        headless: true,
+    });
       const page = await browser.newPage();
 
       await page.setViewport({ width: 1200, height: 1000});
