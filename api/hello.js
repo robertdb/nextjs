@@ -1,6 +1,7 @@
-const puppeteer = require('puppeteer');
+// Next.js API route support: https://nextjs.org/docs/api-routes/introduction
+import chromium from "chrome-aws-lambda";
 require('dotenv').config();
-const jsdom = require('jsdom');
+import jsdom from "jsdom";
 
 const getAllAttributes = el => el
   .getAttributeNames()
@@ -82,12 +83,31 @@ const LOGIN_URL = 'https://www.golfpalermo.com/?page=login&url=?page%3Dmyaccount
 const RESERVATION_STEP_1_URL = 'https://www.golfpalermo.com/?page=reservas_step1';
 const MY_RESERVATIONS_URL = 'https://www.golfpalermo.com/index.php?page=myaccount_misreservas';
 
-const doReservation = async () => {
+
+export default function handler(req, res) {
+(async () => {
   console.log(JSON.parse(process.env.WISH_GAME))
   let flag = true;
   try {
-    while (flag) { 
-      const browser = await puppeteer.launch({headless: true}) ;
+    while (flag) {
+      let chrome = {};
+      let puppeteer;
+
+      if (process.env.AWS_LAMBDA_FUNCTION_VERSION) {
+        // running on the Vercel platform.
+        chrome = require('chrome-aws-lambda');
+        puppeteer = require('puppeteer-core');
+      } else {
+        // running locally.
+        puppeteer = require('puppeteer');
+      } 
+      const browser = await puppeteer.launch({
+        args: [...chrome.args, '--hide-scrollbars', '--disable-web-security'],
+        defaultViewport: chrome.defaultViewport,
+        executablePath: await chrome.executablePath,
+        headless: true,
+        ignoreHTTPSErrors: true,});
+
       const page = await browser.newPage();
 
       await page.setViewport({ width: 1200, height: 1000});
@@ -221,12 +241,6 @@ const doReservation = async () => {
   } catch (error) {
     console.error(error);
   }
-}
-
-export { doReservation };
-export default function handler(req, res) {
-(async () => {
-  await doReservation();
 })();
   res.status(200).json({ name: 'John Doe' })
 }
